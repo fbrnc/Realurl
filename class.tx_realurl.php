@@ -197,6 +197,21 @@ class tx_realurl {
 	protected $ignoreGETvar;
 
 	/**
+	 * The default value that is used to replace empty values
+	 * in path segments (encoded postVars)
+	 */
+	protected $emptyReplacerDefaultValue = '-';
+
+	/**
+	 * @var tx_realurl_configurationService
+	 */
+	private $configurationService;
+
+
+	private $pre_GET_VARS; //function decodeSpURL_doDecode stores the calculated pre_GET_VARS, so clients of this class can access this information
+
+
+	/**
 	 * Contains URL parameters that were merged into URL. This is necessary
 	 * if cHash has to be recalculated due to bypassed parameters. Used during
 	 * encoding only.
@@ -236,6 +251,7 @@ class tx_realurl {
 		$sysconf = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['realurl']);
 		$this->enableStrictMode = (boolean)$sysconf['enableStrictMode'];
 		$this->enableChashUrlDebug = (boolean)$sysconf['enableChashUrlDebug'];
+		$this->configurationService = t3lib_div::makeInstance('tx_realurl_configurationService');
 
 		$this->initDevLog($sysconf);
 	}
@@ -291,10 +307,17 @@ class tx_realurl {
 		$this->devLog('Starting URL encode');
 
 		// Initializing config / request URL:
-		$this->setConfig();
+		try {
+			$this->extConf = $this->configurationService->getConfigurationForDomain($params['args']['targetDomain']);
+		} catch (Exception $e) {
+			$this->pObj->pageNotFoundAndExit($e->getMessage());
+		}
 		$adjustedConfiguration = $this->adjustConfigurationByHost('encode', $params);
-		$this->adjustRootPageId();
 		$internalExtras = array();
+		//add workspace to internal vars for caching purposes
+		if ($GLOBALS['BE_USER']->workspace) {
+			$internalExtras['workspace'] = $GLOBALS['BE_USER']->workspace;
+		}
 
 		// Init "Admin Jump"; If frontend edit was enabled by the current URL of the page, set it again in the generated URL (and disable caching!)
 		if (!$params['TCEmainHook']) {
@@ -430,6 +453,13 @@ class tx_realurl {
 		// Pre-vars:
 		$this->encodeSpURL_setSequence($this->extConf['preVars'], $paramKeyValues, $pathParts);
 
+		if (isset($paramKeyValues['id'])) {
+			$externalURL = $this->_checkForExternalPageAndGetTarget($paramKeyValues['id']);
+			if ($externalURL !== false) {
+				return $externalURL;
+			}
+		}
+
 		// Create path from ID value:
 		$page_id = $this->encodePageId = $paramKeyValues['id'];
 		$this->encodeError = FALSE;
@@ -450,6 +480,13 @@ class tx_realurl {
 
 		// Compile Speaking URL path
 		$pathParts = $this->cleanUpPathParts($pathParts);
+
+			//replace emtpy values (that looks like "//")
+		if ($this->extConf['init']['postReplaceEmptyValues'] == 1 ) {
+			$emptyPathSegmentReplaceValue = ($this->extConf['init']['emptyValuesReplacer'])?$this->extConf['init']['emptyValuesReplacer']:$this->emptyReplacerDefaultValue;
+			$newUrl = preg_replace('#(?<!:)//#', '/' . $emptyPathSegmentReplaceValue . '/', $newUrl); 	//   input: //// output: /-//-/
+			$newUrl = preg_replace('#(?<!:)//#', '/' . $emptyPathSegmentReplaceValue . '/', $newUrl);	//   output /-/-/-/-/
+		}
 
 		// Add filename, if any:
 		$newUrl = $this->createURLWithFileName($paramKeyValues, $pathParts);
@@ -912,9 +949,12 @@ class tx_realurl {
 		$this->pObj = &$params['pObj'];
 
 		// Initializing config / request URL:
-		$this->setConfig();
+		try {
+			$this->extConf = $this->configurationService->getConfigurationForDomain();
+		} catch (Exception $e) {
+			$this->pObj->pageNotFoundAndExit($e->getMessage());
+		}
 		$this->adjustConfigurationByHost('decode');
-		$this->adjustRootPageId();
 
 		// If there has been a redirect (basically; we arrived here otherwise than via "index.php" in the URL) this can happend either due to a CGI-script or because of reWrite rule. Earlier we used $GLOBALS['HTTP_SERVER_VARS']['REDIRECT_URL'] to check but...
 		if ($this->pObj->siteScript && substr($this->pObj->siteScript, 0, 9) != 'index.php' && substr($this->pObj->siteScript, 0, 1) != '?') {
@@ -1133,6 +1173,17 @@ class tx_realurl {
 		$pathParts = explode('/', $speakingURIpath);
 		array_walk($pathParts, create_function('&$value', '$value = rawurldecode($value);'));
 
+		//clear former replaced empty values
+		if ($this->extConf['init']['postReplaceEmptyValues'] !== 0) {
+			$emptyPathSegmentReplaceValue = ($this->extConf['init']['emptyValuesReplacer']) ? $this->extConf['init']['emptyValuesReplacer'] : $this->emptyReplacerDefaultValue;
+			foreach ($pathParts as $k => $v) {
+				if ($v == $emptyPathSegmentReplaceValue) {
+					$pathParts[$k] = '';
+				}
+			}
+		}
+		$this->filePart = array_pop($pathParts);
+
 		// Strip/process file name or extension first
 		$file_GET_VARS = $this->decodeSpURL_decodeFileName($pathParts);
 
@@ -1156,6 +1207,9 @@ class tx_realurl {
 		// Setting page id:
 		list($cachedInfo['id'], $id_GET_VARS, $cachedInfo['rootpage_id']) = $this->decodeSpURL_idFromPath($pathParts);
 
+		// make preVars accessible
+		$this->pre_GET_VARS = $pre_GET_VARS;
+ 
 		// Fixed Post-vars:
 		$fixedPostVarSetCfg = $this->getPostVarSetConfig($cachedInfo['id'], 'fixedPostVars');
 		$fixedPost_GET_VARS = $this->decodeSpURL_settingPreVars($pathParts, $fixedPostVarSetCfg);
@@ -1581,7 +1635,7 @@ class tx_realurl {
 									'value' => $value,
 								);
 								$value = t3lib_div::callUserFunction($setup['userFunc'], $params, $this);
-							} elseif (is_array($setup['lookUpTable'])) {
+							} elseif (is_array($setup['lookUpTable']) && $value != '') {
 								$temp = $value;
 								$value = $this->lookUpTranslation($setup['lookUpTable'], $value, TRUE);
 								if ($setup['lookUpTable']['enable404forInvalidAlias'] && !t3lib_div::testInt($value) && !strcmp($value, $temp)) {
@@ -2060,6 +2114,9 @@ class tx_realurl {
 			$processedTitle = preg_replace('/[^a-zA-Z0-9\\' . $space . ']/', '', $processedTitle);
 		}
 		$processedTitle = preg_replace('/\\' . $space . '{2,}/', $space, $processedTitle); // Convert multiple 'spaces' to a single one
+		// Strip the rest...:
+		$processedTitle = preg_replace('/[^a-zA-Z0-9\\' . $space . ']/', '', $processedTitle); // strip the rest
+		$processedTitle = preg_replace('/\\' . $space . '+/', $space, $processedTitle); // Convert multiple 'spaces' to a single one
 		$processedTitle = trim($processedTitle, $space);
 
 		if ($cfg['useUniqueCache_conf']['encodeTitle_userProc']) {
@@ -2077,64 +2134,6 @@ class tx_realurl {
 	 * General helper functions (both decode/encode)
 	 *
 	 ******************************/
-
-	/**
-	 * Sets configuration in $this->extConf, taking host domain into account
-	 *
-	 * @return	void
-	 * @see encodeSpURL(), decodeSpURL()
-	 */
-	protected function setConfig() {
-
-		// Finding host-name / IP, always in lowercase:
-		$this->hostConfigured = $this->host = $this->getHost();
-
-		$_realurl_conf = (array)@unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['realurl']);
-		// Autoconfiguration
-		if ($_realurl_conf['enableAutoConf'] && !isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl']) && !@include_once (PATH_site . TX_REALURL_AUTOCONF_FILE) && !isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'])) {
-			require_once (t3lib_extMgm::extPath('realurl', 'class.tx_realurl_autoconfgen.php'));
-			$_realurl_gen = t3lib_div::makeInstance('tx_realurl_autoconfgen');
-			$_realurl_gen->generateConfiguration();
-			unset($_realurl_gen);
-			@include_once(PATH_site . TX_REALURL_AUTOCONF_FILE);
-		}
-
-		$extConf = &$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['realurl'];
-
-		$this->multidomain = $this->isMultidomain();
-
-		// First pass, finding configuration OR pointer string:
-		if (isset($extConf[$this->host])) {
-			$this->extConf = $extConf[$this->host];
-
-			// If it turned out to be a string pointer, then look up the real config:
-			while (!is_null($this->extConf) && is_string($this->extConf)) {
-				$this->hostConfigured = $this->extConf;
-				$this->extConf = $extConf[$this->extConf];
-			}
-			if (!is_array($this->extConf)) {
-				$this->extConf = $extConf['_DEFAULT'];
-				$this->hostConfigured = '_DEFAULT';
-				if ($this->multidomain && isset($this->extConf['pagePath']['rootpage_id'])) {
-					// This can't be right!
-					unset($this->extConf['pagePath']['rootpage_id']);
-				}
-			}
-		}
-		else {
-			if ($this->enableStrictMode && $this->multidomain) {
-				$this->pObj->pageNotFoundAndExit('RealURL strict mode error: ' .
-					'multidomain configuration detected and domain \'' . $this->host .
-					'\' is not configured for RealURL. Please, fix your RealURL configuration!');
-			}
-			$this->extConf = (array)$extConf['_DEFAULT'];
-			$this->hostConfigured = '_DEFAULT';
-			if ($this->multidomain && isset($this->extConf['pagePath']['rootpage_id'])) {
-				// This can't be right!
-				unset($this->extConf['pagePath']['rootpage_id']);
-			}
-		}
-	}
 
 	/**
 	 * Determines the current host. Sometimes it is not possible to determine
@@ -2669,6 +2668,56 @@ class tx_realurl {
 		list($pageRecord) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('tx_realurl_nocache',
 			'pages', 'uid=' . intval($pageId));
 		return is_array($pageRecord) ? !$pageRecord['tx_realurl_nocache'] : false;
+	}
+
+    /**
+	 * used by other realurl classes - in order to have access to the decoded pre get vars
+	 * (like language etc...)
+	 */
+	public function getRetrievedPreGetVar($key) {
+		return $this->pre_GET_VARS[$key];
+	}
+
+	/**
+	 * checks if the pageid is an external url - and then returns the absolute url
+	 *
+	 * @return mixed    string with url or false
+	 */
+	private function _checkForExternalPageAndGetTarget($id) {
+		$where = "uid=\"" . intval($id) . "\"";
+		$query = $GLOBALS['TYPO3_DB']->exec_SELECTquery("uid,pid,url,doktype,urltype", "pages", $where);
+		if ($query) {
+			$result = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($query);
+			$GLOBALS['TSFE']->sys_page->versionOL("pages", $result);
+		}
+		$result = $GLOBALS['TSFE']->sys_page->getPageOverlay($result);
+		if (count($result)) {
+			if ($result['doktype'] == 3) {
+				$url = $result['url'];
+				switch ($result['urltype']) {
+					case '1':
+						return 'http://' . $url;
+						break;
+					case '4':
+						return 'https://' . $url;
+						break;
+					case '2':
+						return 'ftp://' . $url;
+						break;
+					case '3':
+						return 'mailto:' . $url;
+						break;
+					default:
+						return $url;
+						break;
+
+				}
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 	/**
