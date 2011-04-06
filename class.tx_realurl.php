@@ -454,7 +454,7 @@ class tx_realurl {
 		$this->encodeSpURL_setSequence($this->extConf['preVars'], $paramKeyValues, $pathParts);
 
 		if (isset($paramKeyValues['id'])) {
-			$externalURL = $this->_checkForExternalPageAndGetTarget($paramKeyValues['id']);
+			$externalURL = $this->checkForExternalPageAndGetTarget($paramKeyValues['id']);
 			if ($externalURL !== false) {
 				return $externalURL;
 			}
@@ -1130,6 +1130,17 @@ class tx_realurl {
 				'url_hash=' . $hash . ' AND url=' . $url . ' AND domain_limit=' . $domainId,
 				$fields_values, array('counter'));
 
+			/**
+			 * This is the part the actually differs from the original method
+			 */
+			// Convert to realurl url if the path begins with '/id='
+			if (t3lib_div::isFirstPartOfStr($redirect_row['destination'], '/id=')) {
+				$redirect_row['destination'] = $this->encodeSpURL_doEncode(substr($redirect_row['destination'], 1), $this->extConf['init']['enableCHashCache']);
+			}
+			/**
+			 * This is the part the actually differs from the original method [end]
+			 */
+
 			// Redirect
 			if ($redirectRow['has_moved']) {
 				header('HTTP/1.1 301 Moved Permanently');
@@ -1173,19 +1184,29 @@ class tx_realurl {
 		$pathParts = explode('/', $speakingURIpath);
 		array_walk($pathParts, create_function('&$value', '$value = rawurldecode($value);'));
 
-		//clear former replaced empty values
-		if ($this->extConf['init']['postReplaceEmptyValues'] !== 0) {
-			$emptyPathSegmentReplaceValue = ($this->extConf['init']['emptyValuesReplacer']) ? $this->extConf['init']['emptyValuesReplacer'] : $this->emptyReplacerDefaultValue;
-			foreach ($pathParts as $k => $v) {
+		// Strip/process file name or extension first
+		$file_GET_VARS = $this->decodeSpURL_decodeFileName($pathParts);
+
+			//clear former replaced empty values
+		if ($this->extConf ['init'] ['postReplaceEmptyValues'] == 1) {
+			$emptyPathSegmentReplaceValue = ($this->extConf ['init'] ['emptyValuesReplacer']) ? $this->extConf ['init'] ['emptyValuesReplacer'] : $this->emptyReplacerDefaultValue;
+			foreach ( $pathParts as $k => $v ) {
 				if ($v == $emptyPathSegmentReplaceValue) {
-					$pathParts[$k] = '';
+					$pathParts [$k] = '';
 				}
 			}
 		}
 		$this->filePart = array_pop($pathParts);
 
-		// Strip/process file name or extension first
-		$file_GET_VARS = $this->decodeSpURL_decodeFileName($pathParts);
+		// Checking default HTML name:
+		if (strlen($this->filePart) && ($this->extConf['fileName']['defaultToHTMLsuffixOnPrev'] || $this->extConf['fileName']['acceptHTMLsuffix']) && !isset($this->extConf['fileName']['index'][$this->filePart])) {
+			$suffix = preg_quote($this->isString($this->extConf['fileName']['defaultToHTMLsuffixOnPrev'], 'defaultToHTMLsuffixOnPrev') ? $this->extConf['fileName']['defaultToHTMLsuffixOnPrev'] : '.html', '/');
+			if ($this->isString($this->extConf['fileName']['acceptHTMLsuffix'], 'acceptHTMLsuffix')) {
+				$suffix = '(' . $suffix . '|' . preg_quote($this->extConf['fileName']['acceptHTMLsuffix'], '/') . ')';
+			}
+			$pathParts[] = preg_replace('/' . $suffix . '$/', '', $this->filePart);
+			$this->filePart = '';
+		}
 
 		// Setting original dir-parts:
 		$this->dirParts = $pathParts;
@@ -1209,7 +1230,7 @@ class tx_realurl {
 
 		// make preVars accessible
 		$this->pre_GET_VARS = $pre_GET_VARS;
- 
+
 		// Fixed Post-vars:
 		$fixedPostVarSetCfg = $this->getPostVarSetConfig($cachedInfo['id'], 'fixedPostVars');
 		$fixedPost_GET_VARS = $this->decodeSpURL_settingPreVars($pathParts, $fixedPostVarSetCfg);
@@ -1963,6 +1984,12 @@ class tx_realurl {
 	 */
 	protected function lookUp_uniqAliasToId($cfg, $aliasValue, $onlyNonExpired = FALSE) {
 
+		static $cache = array();
+		$paramhash = md5(serialize($cfg).serialize($aliasValue).serialize($onlyNonExpired));
+
+		if (isset($cache[$paramhash])) {
+			return $cache[$paramhash];
+		}
 		// Look up the ID based on input alias value:
 		list($row) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('value_id', 'tx_realurl_uniqalias',
 				'value_alias=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($aliasValue, 'tx_realurl_uniqalias') .
@@ -1970,7 +1997,12 @@ class tx_realurl {
 				' AND field_id=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($cfg['id_field'], 'tx_realurl_uniqalias') .
 				' AND tablename=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($cfg['table'], 'tx_realurl_uniqalias') .
 				' AND ' . ($onlyNonExpired ? 'expire=0' : '(expire=0 OR expire>' . time() . ')'));
-		return (is_array($row) ? $row['value_id'] : false);
+		$returnValue = (is_array($row) ? $row['value_id'] : false);
+
+		if ($returnValue) {
+			$cache[$paramhash] = $returnValue;
+		}
+		return $returnValue;
 	}
 
 	/**
@@ -1985,6 +2017,12 @@ class tx_realurl {
 	 * @see lookUpTranslation(), lookUp_uniqAliasToId()
 	 */
 	protected function lookUp_idToUniqAlias($cfg, $idValue, $lang, $aliasValue = '') {
+		static $cache = array();
+		$paramhash = md5(serialize($cfg).serialize($idValue).serialize($lang).serialize($aliasValue));
+
+		if (isset($cache[$paramhash])) {
+			return $cache[$paramhash];
+		}
 
 		// Look for an alias based on ID:
 		list($row) = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows('value_alias', 'tx_realurl_uniqalias',
@@ -1997,9 +2035,13 @@ class tx_realurl {
 				($aliasValue ? ' AND value_alias=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($aliasValue, 'tx_realurl_uniqalias') : ''),
 				'', '', '1');
 		if (is_array($row)) {
-			return $row['value_alias'];
+			$returnValue =  $row['value_alias'];
+		} else {
+			$returnValue = null;
 		}
-		return null;
+			//@todo check if we should cache anthing if $returnValue is "false"
+		$cache[$paramhash] = $returnValue;
+		return $returnValue;
 	}
 
 	/**
@@ -2683,7 +2725,7 @@ class tx_realurl {
 	 *
 	 * @return mixed    string with url or false
 	 */
-	private function _checkForExternalPageAndGetTarget($id) {
+	private function checkForExternalPageAndGetTarget($id) {
 		$where = "uid=\"" . intval($id) . "\"";
 		$query = $GLOBALS['TYPO3_DB']->exec_SELECTquery("uid,pid,url,doktype,urltype", "pages", $where);
 		if ($query) {

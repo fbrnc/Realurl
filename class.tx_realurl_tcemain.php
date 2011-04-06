@@ -270,12 +270,43 @@ class tx_realurl_tcemain {
 	 * @param string $tableName
 	 * @param int $recordId
 	 * @param array $databaseData
+	 * @param t3lib_tcemain $reference
 	 * @return void
 	 * @todo Expire unique alias cache: how to get the proper timeout value easily here?
 	 */
-	public function processDatamap_afterDatabaseOperations($status, $tableName, $recordId, array $databaseData) {
+	public function processDatamap_afterDatabaseOperations($status, $tableName, $recordId, array $databaseData,t3lib_tcemain &$reference) {
 		$this->processContentUpdates($status, $tableName, $recordId, $databaseData);
 		$this->clearAutoConfiguration($tableName);
+		$this->markCachesDirty($tableName, $recordId, $reference);
+	}
+
+
+	/**
+	 * In case an page-overlay is created automatically the excludeFromMiddle value needs to be copied
+	 * See issue #12007
+	 *
+	 * @author	Tolleiv Nietsch
+	 * @package realurl
+	 * @subpackage aoe_realurlpath
+	 * @param array $incomingFieldArray
+	 * @param string $table
+	 * @param string $id
+	 * @param object $ref
+	 * @return void
+	 */
+	public function processDatamap_preProcessFieldArray(&$incomingFieldArray, $table, $id, t3lib_tcemain &$reference) {
+
+		if($table != 'pages_language_overlay' || $id != 'NEW') {
+			return;
+		}
+
+		if(intval($incomingFieldArray['pid'])) {
+			$parent = t3lib_BEfunc::getRecord('pages', intval($incomingFieldArray['pid']), 'uid,pid,tx_realurl_exclude');
+			t3lib_BEfunc::workspaceOL('pages', $parent);
+			if($parent['tx_realurl_exclude']) {
+				$incomingFieldArray['tx_realurl_exclude'] = $parent['tx_realurl_exclude'];
+			}
+		}
 	}
 
 	/**
@@ -318,6 +349,26 @@ class tx_realurl_tcemain {
 			$result = count(array_intersect($interestingFields, array_keys($databaseData))) > 0;
 		}
 		return $result;
+	}
+
+	/**
+	 * @param string $tableName
+	 * @param  $recordId
+	 * @param  $reference
+	 * @return void
+	 */
+	protected function markCachesDirty($tableName, $recordId, &$reference) {
+			if ($tableName == 'pages') {
+			$cache = new tx_realurl_cachemgmt($GLOBALS ['BE_USER']->workspace, 0);
+			$cache->markAsDirtyCompletePid($recordId);
+		}
+		if ($tableName == 'pages_language_overlay') {
+			$pid = $reference->checkValue_currentRecord ['pid'];
+			if ($pid) {
+				$cache = new tx_realurl_cachemgmt($GLOBALS ['BE_USER']->workspace, 0);
+				$cache->markAsDirtyCompletePid($pid);
+			}
+		}
 	}
 }
 

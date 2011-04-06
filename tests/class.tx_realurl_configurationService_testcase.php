@@ -71,12 +71,12 @@ class tx_realurl_configurationService_testcase extends tx_phpunit_testcase {
 						),
 						'pagePath' => array (
 							 'type' => 'user',
-							 'userFunc' => 'EXT:aoe_realurlpath/class.tx_aoerealurlpath_pagepath.php:&tx_aoerealurlpath_pagepath->main',
+							 'userFunc' => 'EXT:realurl/class.tx_realurl_advanced.php:&tx_realurl_advanced->main',
 							 'spaceCharacter' => '-',
 							 'cacheTimeOut'=>'100',
 							 'languageGetVar' => 'L',
 							 'rootpage_id' => '1',
-							 'segTitleFieldList'=>'alias,tx_aoerealurlpath_overridesegment,nav_title,title,subtitle',
+							 'segTitleFieldList'=>'alias,tx_realurl_pathsegment,nav_title,title,subtitle',
 
 					  ),
 			     )

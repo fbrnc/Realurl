@@ -41,7 +41,7 @@ class ext_update {
 	 */
 	public function access($what = 'all') {
 		$fields = $GLOBALS['TYPO3_DB']->admin_get_fields('pages');
-		return isset($fields['tx_aoerealurlpath_overridepath']) && isset($fields['tx_aoerealurlpath_excludefrommiddle']);
+		return isset($fields['tx_realurl_pathoverride']) && isset($fields['tx_realurl_exclude']);
 	}
 
 	/**
@@ -70,10 +70,10 @@ class ext_update {
 			'<form action="' . t3lib_div::getIndpEnv('REQUEST_URI') . '" method="POST">' .
 			'<p>This update will do the following:</p>' .
 			'<ul>' .
-			'<li>Import path overrides from aoe_realurlpath</li>' .
-			'<li>Import exclusion flags from aoe_realurlpath</li>' .
+			'<li>Import path overrides from realurl</li>' .
+			'<li>Import exclusion flags from realurl</li>' .
 			'</ul>' .
-			'<p><b>Warning!</b> All current empty values will be discarded and replaced with values from aoe_realurlpath!</p>' .
+			'<p><b>Warning!</b> All current empty values will be discarded and replaced with values from realurl!</p>' .
 			'<br />' .
 			'<input type="submit" name="nssubmit" value="Update" /></form>';
 	}
@@ -85,11 +85,11 @@ class ext_update {
 	 */
 	protected function updateOverridePaths() {
 		$GLOBALS['TYPO3_DB']->sql_query('UPDATE pages SET tx_realurl_exclude=1 ' .
-			'WHERE tx_aoerealurlpath_excludefrommiddle<>0');
-		$GLOBALS['TYPO3_DB']->sql_query('UPDATE pages SET tx_realurl_pathoverride=1,tx_realurl_pathsegment=tx_aoerealurlpath_overridepath ' .
-			'WHERE tx_aoerealurlpath_overridepath<>\'\' AND tx_realurl_pathsegment=\'\'');
-		$GLOBALS['TYPO3_DB']->sql_query('UPDATE pages_language_overlay SET tx_realurl_pathsegment=tx_aoerealurlpath_overridepath ' .
-			'WHERE tx_aoerealurlpath_overridepath<>\'\' AND tx_realurl_pathsegment=\'\'');
+			'WHERE tx_realurl_exclude<>0');
+		$GLOBALS['TYPO3_DB']->sql_query('UPDATE pages SET tx_realurl_pathoverride=1,tx_realurl_pathsegment=tx_realurl_pathoverride ' .
+			'WHERE tx_realurl_pathoverride<>\'\' AND tx_realurl_pathsegment=\'\'');
+		$GLOBALS['TYPO3_DB']->sql_query('UPDATE pages_language_overlay SET tx_realurl_pathsegment=tx_realurl_pathoverride ' .
+			'WHERE tx_realurl_pathoverride<>\'\' AND tx_realurl_pathsegment=\'\'');
 	}
 }
 

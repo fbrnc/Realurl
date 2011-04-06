@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<typo3_playground>
+  <!-- Tabelle pages -->
+    <pages>
+        <uid>88</uid>
+        <pid>-1</pid>
+        <title>subpage-ws</title>
+        <nav_title></nav_title>
+        <subtitle></subtitle>
+        <doktype>1</doktype>
+        <hidden>0</hidden>
+        <is_siteroot>1</is_siteroot>        
+        <php_tree_stop>1</php_tree_stop>
+        <shortcut>0</shortcut>
+        <shortcut_mode>0</shortcut_mode>
+        <tx_realurl_pathoverride></tx_realurl_pathoverride>
+        <tx_realurl_pathsegment>subpagepathsegment-ws</tx_realurl_pathsegment>
+        <tx_realurl_exclude>0</tx_realurl_exclude>
+        <urltype>1</urltype>
+        
+        <t3ver_oid>85</t3ver_oid>
+        <t3ver_id>1</t3ver_id>
+        <t3ver_wsid>1</t3ver_wsid>
+        <t3ver_label>Auto-created for WS #1</t3ver_label>
+        <t3ver_state>0</t3ver_state>
+        <t3ver_stage>0</t3ver_stage>
+        <t3ver_count>0</t3ver_count>
+        <t3ver_tstamp>0</t3ver_tstamp>
+        <t3ver_swapmode>-1</t3ver_swapmode>
+        <t3_origuid>85</t3_origuid>
+        <t3ver_move_id>0</t3ver_move_id>
+    </pages>
+
+    <pages>
+        <uid>1010</uid>
+        <pid>-1</pid>
+        <title>test-ws</title>
+        <nav_title></nav_title>
+        <subtitle></subtitle>
+        <doktype>1</doktype>
+        <hidden>0</hidden>
+        <shortcut>0</shortcut>
+        <shortcut_mode>0</shortcut_mode>
+        
+        <t3ver_oid>1000</t3ver_oid>
+        <t3ver_id>1</t3ver_id>
+        <t3ver_wsid>1</t3ver_wsid>
+        <t3ver_label>Auto-created for WS #1</t3ver_label>
+        <t3ver_state>0</t3ver_state>
+        <t3ver_stage>0</t3ver_stage>
+        <t3ver_count>0</t3ver_count>
+        <t3ver_tstamp>0</t3ver_tstamp>
+        <t3ver_swapmode>-1</t3ver_swapmode>
+        <t3_origuid>1000</t3_origuid>
+        <t3ver_move_id>0</t3ver_move_id>
+    </pages>
+
+    <pages>
+        <uid>1020</uid>
+        <pid>-1</pid>
+        <title>test-ws</title>
+        <nav_title></nav_title>
+        <subtitle></subtitle>
+        <doktype>1</doktype>
+        <hidden>0</hidden>
+        <shortcut>0</shortcut>
+        <shortcut_mode>0</shortcut_mode>
+        
+        <t3ver_oid>1002</t3ver_oid>
+        <t3ver_id>1</t3ver_id>
+        <t3ver_wsid>1</t3ver_wsid>
+        <t3ver_label>Auto-created for WS #1</t3ver_label>
+        <t3ver_state>0</t3ver_state>
+        <t3ver_stage>0</t3ver_stage>
+        <t3ver_count>0</t3ver_count>
+        <t3ver_tstamp>0</t3ver_tstamp>
+        <t3ver_swapmode>-1</t3ver_swapmode>
+        <t3_origuid>1002</t3_origuid>
+        <t3ver_move_id>0</t3ver_move_id>
+    </pages>
+</typo3_playground>

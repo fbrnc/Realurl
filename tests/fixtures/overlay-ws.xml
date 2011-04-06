@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+-
+- phpMyAdmin XML Dump
+- version 2.6.4-pl3
+- http://www.phpmyadmin.net
+-
+- Host: localhost
+- Erstellungszeit: 28. Januar 2009 um 08:10
+- Server Version: 5.0.41
+- PHP-Version: 5.2.5
+-->
+
+<!--
+- Datenbank: `typo3_playground`
+-->
+<typo3_playground>
+  <!-- Tabelle pages_language_overlay -->
+    <pages_language_overlay>
+        <uid>83</uid>
+        <pid>-1</pid>
+        <t3ver_oid>79</t3ver_oid>
+        <t3ver_id>1</t3ver_id>
+        <t3ver_wsid>1</t3ver_wsid>
+        <t3ver_label>Auto-created for WS #1</t3ver_label>
+        <t3ver_state>0</t3ver_state>
+        <t3ver_stage>0</t3ver_stage>
+        <t3ver_count>0</t3ver_count>
+        <t3ver_tstamp>0</t3ver_tstamp>
+        <t3_origuid>79</t3_origuid>
+        <sys_language_uid>2</sys_language_uid>
+        <title>languagemix-austria</title>
+        <subtitle></subtitle>
+        <nav_title></nav_title>
+        <tx_realurl_pathoverride>own/url/for/austria/in/ws</tx_realurl_pathoverride>
+        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_exclude>0</tx_realurl_exclude>
+    </pages_language_overlay>
+    <pages_language_overlay>
+        <uid>85</uid>
+        <pid>-1</pid>
+        <t3ver_oid>84</t3ver_oid>
+        <t3ver_id>1</t3ver_id>
+        <t3ver_wsid>1</t3ver_wsid>
+        <t3ver_label>First draft version</t3ver_label>
+        <t3ver_state>-1</t3ver_state>
+        <t3ver_stage>0</t3ver_stage>
+        <t3ver_count>0</t3ver_count>
+        <t3ver_tstamp>0</t3ver_tstamp>
+        <t3_origuid>0</t3_origuid>
+        <sys_language_uid>1</sys_language_uid>
+        <title>languagemix-de</title>
+        <subtitle></subtitle>
+        <nav_title></nav_title>
+        <tx_realurl_pathoverride></tx_realurl_pathoverride>
+        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_exclude>0</tx_realurl_exclude>
+    </pages_language_overlay>
+    <pages_language_overlay>
+        <uid>87</uid>
+        <pid>-1</pid>
+        <t3ver_oid>86</t3ver_oid>
+        <t3ver_id>1</t3ver_id>
+        <t3ver_wsid>1</t3ver_wsid>
+        <t3ver_label>First draft version</t3ver_label>
+        <t3ver_state>-1</t3ver_state>
+        <t3ver_stage>0</t3ver_stage>
+        <t3ver_count>0</t3ver_count>
+        <t3ver_tstamp>0</t3ver_tstamp>
+        <t3_origuid>0</t3_origuid>
+        <sys_language_uid>1</sys_language_uid>
+        <title>subpage-ws-de</title>
+        <subtitle></subtitle>
+        <nav_title></nav_title>
+        <tx_realurl_pathoverride></tx_realurl_pathoverride>
+        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_exclude>0</tx_realurl_exclude>
+    </pages_language_overlay>
+</typo3_playground>
