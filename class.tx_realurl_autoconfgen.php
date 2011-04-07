@@ -165,7 +165,7 @@ class tx_realurl_autoconfgen {
 			),
 			'pagePath' => array(
 				'type' => 'user',
-				'userFunc' => 'EXT:realurl/class.tx_realurl_advanced.php:&tx_realurl_advanced->main',
+				'userFunc' => 'EXT:realurl/class.tx_realurl_pagepath.php:&tx_realurl_pagepath->main',
 				'spaceCharacter' => '-',
 				'languageGetVar' => 'L',
 			),
