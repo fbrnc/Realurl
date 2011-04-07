@@ -359,13 +359,13 @@ class tx_realurl_tcemain {
 	 */
 	protected function markCachesDirty($tableName, $recordId, &$reference) {
 			if ($tableName == 'pages') {
-			$cache = new tx_realurl_cachemgmt($GLOBALS ['BE_USER']->workspace, 0);
+			$cache = t3lib_div::makeInstance('tx_realurl_cachemgmt', $GLOBALS ['BE_USER']->workspace, 0);
 			$cache->markAsDirtyCompletePid($recordId);
 		}
 		if ($tableName == 'pages_language_overlay') {
 			$pid = $reference->checkValue_currentRecord ['pid'];
 			if ($pid) {
-				$cache = new tx_realurl_cachemgmt($GLOBALS ['BE_USER']->workspace, 0);
+				$cache = t3lib_div::makeInstance('tx_realurl_cachemgmt', $GLOBALS ['BE_USER']->workspace, 0);
 				$cache->markAsDirtyCompletePid($pid);
 			}
 		}

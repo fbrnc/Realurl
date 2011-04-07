@@ -54,7 +54,7 @@ class tx_realurl_pagepath {
 	 * @param	tx_realurl		Copy of parent object.
 	 * @return	mixed		Depends on branching.
 	 */
-	function main($params, $ref) {
+	public function main($params, $ref) {
 			// Setting internal variables:
 		$this->_setParent ( $ref );
 		$this->_setConf ( $params ['conf'] );
@@ -90,7 +90,7 @@ class tx_realurl_pagepath {
 	 * @param array $pathParts from real_url ??
 	 * @return string with path
 	 */
-	function _id2alias($paramKeyValues) {
+	protected function _id2alias($paramKeyValues) {
 		$pageId = $paramKeyValues['id'];
 		if (!is_numeric($pageId)  && is_object($GLOBALS ['TSFE']->sys_page)) {
 			$pageId = $GLOBALS['TSFE']->sys_page->getPageIdFromAlias($pageId );
@@ -125,7 +125,7 @@ class tx_realurl_pagepath {
 	 * @param	array		Array of segments from virtual path
 	 * @return	integer		Page ID
 	 */
-	function _alias2id(&$pagePath) {
+	protected function _alias2id(&$pagePath) {
 		$pagePathOrigin = $pagePath;
 		$keepPath = array ();
 			//Check for redirect
@@ -158,7 +158,7 @@ class tx_realurl_pagepath {
 	 * @param string $path
 	 * @return void
 	 */
-	function _checkAndDoRedirect($path) {
+	protected function _checkAndDoRedirect($path) {
 		$_params = array();
 		if (is_array ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['EXT:realurl/class.tx_realurl_pagepath.php']['checkAndDoRedirect']))	{
 			foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['EXT:realurl/class.tx_realurl_pagepath.php']['checkAndDoRedirect'] as $_funcRef)	{
@@ -171,7 +171,7 @@ class tx_realurl_pagepath {
 	 *
 	 * @return int
 	 */
-	function _getRootPid() {
+	protected function _getRootPid() {
 		// Find the PID where to begin the resolve:
 		if ($this->conf ['rootpage_id']) { // Take PID from rootpage_id if any:
 			$pid = intval ( $this->conf ['rootpage_id'] );

@@ -484,8 +484,7 @@ class tx_realurl {
 			//replace emtpy values (that looks like "//")
 		if ($this->extConf['init']['postReplaceEmptyValues'] == 1 ) {
 			$emptyPathSegmentReplaceValue = ($this->extConf['init']['emptyValuesReplacer'])?$this->extConf['init']['emptyValuesReplacer']:$this->emptyReplacerDefaultValue;
-			$newUrl = preg_replace('#(?<!:)//#', '/' . $emptyPathSegmentReplaceValue . '/', $newUrl); 	//   input: //// output: /-//-/
-			$newUrl = preg_replace('#(?<!:)//#', '/' . $emptyPathSegmentReplaceValue . '/', $newUrl);	//   output /-/-/-/-/
+			$pathParts = preg_replace('#(?<!:)//#', '/' . $emptyPathSegmentReplaceValue . '/', $pathParts); 	//   input: //// output: /-//-/
 		}
 
 		// Add filename, if any:
@@ -1388,7 +1387,7 @@ class tx_realurl {
 	protected function decodeSpURL_settingPostVarSets(&$pathParts, $postVarSetCfg, $pid) {
 		if (is_array($postVarSetCfg)) {
 			$GET_string = '';
-
+//debug($pathParts, __FUNCTION__.__LINE__);die();
 			// Getting first value, the key (and keep stripping of sets of segments until the end is reached!)
 			while (false != ($key = array_shift($pathParts))) {
 				$key = rawurldecode($key);

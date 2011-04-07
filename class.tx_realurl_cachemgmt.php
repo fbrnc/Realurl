@@ -36,7 +36,6 @@
  - move oldlinks to redirects
  - check last updatetime of pages
  **/
-include_once (t3lib_extMgm::extPath('realurl') . 'class.tx_realurl_pathgenerator.php');
 
 /**
  *
@@ -46,7 +45,7 @@ include_once (t3lib_extMgm::extPath('realurl') . 'class.tx_realurl_pathgenerator
  */
 class tx_realurl_cachemgmt {
 	
-	//cahce key values
+	//cache key values
 	var $workspaceId;
 	var $languageId;
 	//unique path check
@@ -67,7 +66,7 @@ class tx_realurl_cachemgmt {
 	 * @param int $workspace
 	 * @param int $languageid
 	 */
-	function tx_realurl_cachemgmt($workspace, $languageid) {
+	function __construct($workspace, $languageid) {
 		$this->workspaceId = $workspace;
 		$this->languageId = $languageid;
 		$this->useUnstrictCacheWhere = FALSE;
