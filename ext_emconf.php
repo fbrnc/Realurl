@@ -50,5 +50,7 @@ $EM_CONF[$_EXTKEY] = array(
 	'suggests' => array(
 	),
 );
+	// Let's make sure we're able to distinguish our version from the original
+$EM_CONF[$_EXTKEY]['version'] .= '.AOE';
 
 ?>
