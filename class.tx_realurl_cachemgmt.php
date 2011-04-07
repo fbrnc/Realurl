@@ -221,7 +221,7 @@ class tx_realurl_cachemgmt {
 			$data['languageid'] = $this->getLanguageId();
 			$data['rootpid'] = $this->getRootPid();
 			$data['pageid'] = $pid;
-			
+
 			if ($this->dbObj->exec_INSERTquery("tx_realurl_cache", $data)) {
 				//TODO ... yeah we saved something in the database - any further problems?
 			} else {
@@ -368,13 +368,13 @@ class tx_realurl_cachemgmt {
 	 * @return boolean
 	 */
 	function _isCacheRowStillValid($row) {
+		$rowIsValid = TRUE;
 		if ($row['dirty'] == 1) {
-			return false;
+			$rowIsValid = FALSE;
 		} elseif (($this->cacheTimeOut > 0) && (($row['tstamp'] + $this->cacheTimeOut) < $GLOBALS['EXEC_TIME'])) {
-			return false;
-		} else {
-			return true;
+			$rowIsValid = FALSE;
 		}
+		return $rowIsValid;
 	}
 
 	/**

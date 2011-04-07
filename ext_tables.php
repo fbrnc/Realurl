@@ -90,8 +90,28 @@ $TCA['pages_language_overlay']['columns'] += array(
 			'eval' => 'trim,nospace,lower'
 		),
 	),
+	'tx_realurl_pathoverride' => array(
+		'label' => 'LLL:EXT:realurl/locallang_db.xml:pages.tx_realurl_path_override',
+		'exclude' => 1,
+		'config' => array (
+			'type' => 'check',
+			'items' => array(
+				array('', '')
+			)
+		)
+	),
+	'tx_realurl_exclude' => array(
+		'label' => 'LLL:EXT:realurl/locallang_db.xml:pages.tx_realurl_exclude',
+		'exclude' => 1,
+		'config' => array (
+			'type' => 'check',
+			'items' => array(
+				array('', '')
+			)
+		)
+	),
 );
 
-t3lib_extMgm::addToAllTCAtypes('pages_language_overlay', 'tx_realurl_pathsegment', '', 'after:nav_title');
+t3lib_extMgm::addToAllTCAtypes('pages_language_overlay', 'tx_realurl_pathsegment,tx_realurl_pathoverride,tx_realurl_exclude', '', 'after:nav_title');
 
 ?>

@@ -76,9 +76,9 @@ class tx_realurl_pathgenerator {
 
 		if ($lastPage ['doktype'] == 3) {
 			$pathString = $this->_buildExternalURL ( $lastPage, $langid, $workspace );
-			$external = true;
+			$external = TRUE;
 
-		} elseif ($overridePath = $this->_stripSlashes ( $lastPage ['tx_realurl_overridepath'] )) {
+		} elseif ($overridePath = $this->_stripSlashes ( $lastPage ['tx_realurl_pathoverride'] )) {
 			$parts = explode ( '/', $overridePath );
 			$cleanParts = array_map ( array (
 				$this,
@@ -92,7 +92,7 @@ class tx_realurl_pathgenerator {
 				$pathString = $this->_getDelegationTarget ( $lastPage );
 				if (! preg_match ( '/^[a-z]+:\/\//', $pathString ))
 					$pathString = 'http://' . $pathString;
-				$external = true;
+				$external = TRUE;
 			} else {
 				$pathString = $this->_buildPath ( $this->conf ['segTitleFieldList'], $rootline );
 			}
@@ -144,7 +144,7 @@ class tx_realurl_pathgenerator {
 	 */
 	function _checkForShortCutPageAndGetTarget($id, $langid = 0, $workspace = 0, $reclevel = 0) {
 		if ($this->conf ['renderShortcuts']) {
-			return false;
+			return FALSE;
 		} else {
 
 			static $cache = array();
@@ -154,15 +154,15 @@ class tx_realurl_pathgenerator {
 				return $cache[$paramhash];
 			}
 
-			$returnValue = NULL;
+			$returnValue = FALSE;
 
 			if ($reclevel > 20) {
-				$returnValue =  false;
+				$returnValue =  FALSE;
 			}
 			$this->_initSysPage ( 0, $workspace ); // check defaultlang since overlays should not contain this (usually)
 			$result = $this->sys_page->getPage ( $id );
 
-			// if overlay for the of shortcuts is requested
+				// if overlay for the of shortcuts is requested
 			if ($this->extconfArr ['localizeShortcuts'] && t3lib_div::inList ( $GLOBALS ['TYPO3_CONF_VARS'] ['FE'] ['pageOverlayFields'], 'shortcut' ) && $langid) {
 
 				$resultOverlay = $this->_getPageOverlay ( $id, $langid );
@@ -175,33 +175,33 @@ class tx_realurl_pathgenerator {
 				switch ($result ['shortcut_mode']) {
 					case '1' : //firstsubpage
 						if ($reclevel > 10) {
-							$returnValue = false;
+							$returnValue = FALSE;
 						}
 						$where = "pid=\"" . $id . "\"";
 						$query = $GLOBALS ['TYPO3_DB']->exec_SELECTquery ( "uid", "pages", $where, '', 'sorting', '0,1' );
 						if ($query)
 							$resultfirstpage = $GLOBALS ['TYPO3_DB']->sql_fetch_assoc ( $query );
-						$subpageShortCut = $this->_checkForShortCutPageAndGetTarget ( $resultfirstpage ['uid'], $langid, $workspace, $reclevel ++ );
-						if ($subpageShortCut !== false) {
+						$subpageShortCut = $this->_checkForShortCutPageAndGetTarget ( $resultfirstpage ['uid'], $langid, $workspace, $reclevel+1 );
+						if ($subpageShortCut !== FALSE) {
 							$returnValue = $subpageShortCut;
 						} else {
 							$returnValue = $resultfirstpage ['uid'];
 						}
 						break;
 					case '2' : //random
-						$returnValue = false;
+						$returnValue = FALSE;
 						break;
 					default :
 						if ($result ['shortcut'] == $id) {
-							$returnValue = false;
-						}
-
-						//look recursive:
-						$subpageShortCut = $this->_checkForShortCutPageAndGetTarget ( $result ['shortcut'], $langid, $workspace, $reclevel ++ );
-						if ($subpageShortCut !== false) {
-							$returnValue = $subpageShortCut;
+							$returnValue = FALSE;
 						} else {
-							$returnValue = $result ['shortcut'];
+							//look recursive:
+							$subpageShortCut = $this->_checkForShortCutPageAndGetTarget ( $result ['shortcut'], $langid, $workspace, $reclevel+1 );
+							if ($subpageShortCut !== FALSE) {
+								$returnValue = $subpageShortCut;
+							} else {
+								$returnValue = $result ['shortcut'];
+							}
 						}
 						break;
 				}
@@ -209,9 +209,9 @@ class tx_realurl_pathgenerator {
 
 				$target = $this->_getDelegationTarget ( $result, $langid, $workspace );
 				if (is_numeric ( $target )) {
-					$res = $this->_checkForShortCutPageAndGetTarget ( $target, $langid, $workspace, $reclevel ++ );
+					$res = $this->_checkForShortCutPageAndGetTarget ( $target, $langid, $workspace, $reclevel-1 );
 					//if the recursion fails we keep the original target
-					if ($res === false) {
+					if ($res === FALSE) {
 						$res = $target;
 					}
 				} else {
@@ -219,7 +219,7 @@ class tx_realurl_pathgenerator {
 				}
 				$returnValue = $res;
 			} else {
-				$returnValue = false;
+				$returnValue = FALSE;
 			}
 
 			$cache[$paramhash] = $returnValue;
@@ -295,14 +295,14 @@ class tx_realurl_pathgenerator {
 		$size = count ( $rootline );
 		$rootline = array_reverse ( $rootline );
 			//do not include rootpage itself, except it is only the root and filename is set:
-		if ($size > 1 || $rootline [0] ['tx_realurl_overridesegment'] == '') {
+		if ($size > 1 || $rootline [0] ['tx_realurl_pathsegment'] == '') {
 			array_shift ( $rootline );
 			$size = count ( $rootline );
 		}
 		$i = 1;
 		foreach ( $rootline as $key => $value ) {
 				//check if the page should exlude from path (if not last)
-			if ($value ['tx_realurl_excludefrommiddle'] && $i != $size) {
+			if ($value ['tx_realurl_exclude'] && $i != $size) {
 			} else {  //the normal way
 
 				$pathSeg = $this->_getPathSeg ( $value, $segment );
@@ -361,7 +361,7 @@ class tx_realurl_pathgenerator {
 	 */
 	function isDelegationDoktype($doktype) {
 		if (! array_key_exists ( $doktype, $this->doktypeCache )) {
-			$this->doktypeCache [$doktype] = ($this->_getDelegationFieldname ( $doktype )) ? true : false;
+			$this->doktypeCache [$doktype] = ($this->_getDelegationFieldname ( $doktype )) ? TRUE : FALSE;
 		}
 		return $this->doktypeCache [$doktype];
 	}
@@ -377,7 +377,7 @@ class tx_realurl_pathgenerator {
 		} else if (is_array ( $GLOBALS ['TYPO3_CONF_VARS'] ['EXTCONF'] ['realurl'] ['delegate'] ) && array_key_exists ( $doktype, $GLOBALS ['TYPO3_CONF_VARS'] ['EXTCONF'] ['realurl'] ['delegate'] )) {
 			return $GLOBALS ['TYPO3_CONF_VARS'] ['EXTCONF'] ['realurl'] ['delegate'] [$doktype];
 		} else {
-			return false;
+			return FALSE;
 		}
 	}
 
@@ -491,7 +491,7 @@ class tx_realurl_pathgenerator {
 		}
 
 		t3lib_div::loadTCA ( 'pages' );
-		$prefix = false;
+		$prefix = FALSE;
 		$prefixItems = $GLOBALS ['TCA'] ['pages'] ['columns'] ['urltype'] ['config'] ['items'];
 		if (is_array($prefixItems)) {
 			foreach ( $prefixItems as $prefixItem ) {

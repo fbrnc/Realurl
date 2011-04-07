@@ -146,31 +146,38 @@ class tx_realurl_cachemgmt_testcase extends tx_phpunit_database_testcase {
 	public function storeInCacheCollisionInWorkspace() {
 
 			// new cachemgm for live workspace
-		$cache = new tx_realurl_cachemgmt ( 0, 0 );
-		$cache->setCacheTimeOut ( 200 );
-		$cache->setRootPid ( 1 );
-		$path = $cache->storeUniqueInCache ( '1000', 'test1000' );
-		$this->assertEquals ( 'test1000', $cache->isInCache ( 1000 ), 'should be in cache' );
-		unset($cache);
+		$liveCache = new tx_realurl_cachemgmt ( 0, 0 );
+		$liveCache->setCacheTimeOut ( 200 );
+		$liveCache->setRootPid ( 1 );
+		$path = $liveCache->storeUniqueInCache ( '1000', 'test1000' );
+		$this->assertEquals ( 'test1000', $liveCache->isInCache ( 1000 ), 'should be in cache' );
+		unset($liveCache);
 
 			// new cachemgm with workspace setting
-		$cache = new tx_realurl_cachemgmt ( 1, 0 );
-		$cache->setCacheTimeOut ( 200 );
-		$cache->setRootPid ( 1 );
+		$workspaceCache = new tx_realurl_cachemgmt ( 1, 0 );
+		$workspaceCache->setCacheTimeOut ( 200 );
+		$workspaceCache->setRootPid ( 1 );
 			// assuming that 1001 is a different page
-		$path = $cache->storeUniqueInCache ( '1001', 'test1000' );
-		$this->assertEquals ( 'test1000_1001', $cache->isInCache ( 1001 ), 'should be in cache' );
+		$workspaceCache->storeUniqueInCache ( '1001', 'test1000' );
+		$this->assertEquals ( 'test1000_1001', $workspaceCache->isInCache ( 1001 ), 'should be in cache' );
 
 			// assuming that 1010 is a workspace overlay for 1000
-		$path = $cache->storeUniqueInCache ( '1010', 'test1000' );
-		$this->assertEquals ( 'test1000', $cache->isInCache ( 1010 ), 'should be in cache' );
+		$workspaceCache->storeUniqueInCache ( '1010', 'test1000' );
+		$this->assertEquals ( 'test1000', $workspaceCache->isInCache ( 1010 ), 'should be in cache' );
 
 			// assuming that 1020 is a workspace overlay for 1002
-		$path = $cache->storeUniqueInCache ( '1020', 'test1002' );
-		$this->assertEquals ( 'test1002', $cache->isInCache ( 1020 ), 'should be in cache' );
+		$workspaceCache->storeUniqueInCache ( '1020', 'test1002' );
+		$this->assertEquals ( 'test1002', $workspaceCache->isInCache ( 1020 ), 'should be in cache' );
+		unset($workspaceCache);
+
+			// new cachemgm without workspace setting
+		$liveCache = new tx_realurl_cachemgmt ( 0, 0 );
+		$liveCache->setCacheTimeOut ( 200 );
+		$liveCache->setRootPid ( 1 );
 			// now try to add the live record to cache
-		$path = $cache->storeUniqueInCache ( '1002', 'test1002' );
-		$this->assertEquals ( 'test1002', $cache->isInCache ( 1002 ), 'should be in cache' );
+		$liveCache->storeUniqueInCache ( '1002', 'test1002' );
+		$this->assertEquals ( 'test1002', $liveCache->isInCache ( 1002 ), 'should be in cache' );
+		unset($liveCache);
 	}
 
 	/**
@@ -256,7 +263,7 @@ class tx_realurl_cachemgmt_testcase extends tx_phpunit_database_testcase {
 		$cache = new tx_realurl_cachemgmt ( 0, 0 );
 		$cache->setCacheTimeOut ( 1 );
 		$this->assertFalse ( $cache->_isCacheRowStillValid ( array ('dirty' => '1' ), FALSE ), 'should return false' );
-		$this->assertFalse ( $cache->_isCacheRowStillValid ( array ('tstamp' => (time () - 2) ), FALSE ), 'should return false' );
+		$this->assertFalse ( $cache->_isCacheRowStillValid ( array ('tstamp' => ($GLOBALS['EXEC_TIME'] - 2) ), FALSE ), 'should return false' );
 	}
 
 	/**
@@ -275,7 +282,9 @@ class tx_realurl_cachemgmt_testcase extends tx_phpunit_database_testcase {
 		$pidOrFalse = $cache->checkCacheWithDecreasingPath ( array ('sample', 'path1' ), $dummy );
 		$this->assertEquals ( $pidOrFalse, '9990', '9990 should be fould for path' );
 
-		sleep ( 2 );
+		//sleep ( 2 );
+		// back to the future ;)
+		$GLOBALS['EXEC_TIME'] = $GLOBALS['EXEC_TIME']+2;
 
 		$dummy = array ();
 		$pidOrFalse = $cache->checkCacheWithDecreasingPath ( array ('sample', 'path1' ), $dummy );

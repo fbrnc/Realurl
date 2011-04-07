@@ -142,10 +142,17 @@ class tx_realurl_pathgenerator_testcase extends tx_phpunit_database_testcase {
 		$result = $this->pathgenerator->build ( 92, 0, 0 );
 		$this->assertEquals ( $result ['path'], 'normal-3rd-level/subsection', 'wrong path build: shortcut from uid92 to uid91 should be resolved' );
 
+	}
+
+	/**
+	 * Excludes and overrides work as supposed
+	 *
+	 * @test
+	 */
+	public function canHandleSelfReferringShortcuts() {
 			// shortcuts with a reference to themselfs might be a problem
 		$result = $this->pathgenerator->build ( 95, 0, 0 );
 		$this->assertEquals ( $result ['path'], 'shortcut-page', 'wrong path build: shortcut shouldn\'t be resolved' );
-
 	}
 
 	/**
