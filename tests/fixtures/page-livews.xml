@@ -30,8 +30,8 @@
         <shortcut>0</shortcut>
         <shortcut_mode>0</shortcut_mode>
         <tx_realurl_exclude>1</tx_realurl_exclude>
-        <tx_realurl_pathoverride>override/path/item</tx_realurl_pathoverride>
-        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_pathoverride>1</tx_realurl_pathoverride>
+        <tx_realurl_pathsegment>override/path/item</tx_realurl_pathsegment>
         <urltype>1</urltype>
     </pages>
     <pages>
@@ -46,8 +46,8 @@
         <shortcut>0</shortcut>
         <shortcut_mode>0</shortcut_mode>
         <tx_realurl_exclude>1</tx_realurl_exclude>
-        <tx_realurl_pathoverride>specialpath/withspecial/おはようございます/chars</tx_realurl_pathoverride>
-        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_pathoverride>1</tx_realurl_pathoverride>
+        <tx_realurl_pathsegment>specialpath/withspecial/おはようございます/chars</tx_realurl_pathsegment>
         <urltype>1</urltype>
     </pages>
     <pages>
@@ -62,8 +62,8 @@
         <shortcut>0</shortcut>
         <shortcut_mode>0</shortcut_mode>
         <tx_realurl_exclude>1</tx_realurl_exclude>
-        <tx_realurl_pathoverride>おはようございます/北方话/广东话</tx_realurl_pathoverride>
-        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_pathoverride>1</tx_realurl_pathoverride>
+        <tx_realurl_pathsegment>おはようございます/北方话/广东话</tx_realurl_pathsegment>
         <urltype>1</urltype>
     </pages>
     <pages>

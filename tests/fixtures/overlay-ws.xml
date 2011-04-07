@@ -32,8 +32,8 @@
         <title>languagemix-austria</title>
         <subtitle></subtitle>
         <nav_title></nav_title>
-        <tx_realurl_pathoverride>own/url/for/austria/in/ws</tx_realurl_pathoverride>
-        <tx_realurl_pathsegment></tx_realurl_pathsegment>
+        <tx_realurl_pathoverride>1</tx_realurl_pathoverride>
+        <tx_realurl_pathsegment>own/url/for/austria/in/ws</tx_realurl_pathsegment>
         <tx_realurl_exclude>0</tx_realurl_exclude>
     </pages_language_overlay>
     <pages_language_overlay>

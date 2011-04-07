@@ -78,7 +78,7 @@ class tx_realurl_pathgenerator {
 			$pathString = $this->_buildExternalURL ( $lastPage, $langid, $workspace );
 			$external = TRUE;
 
-		} elseif ($overridePath = $this->_stripSlashes ( $lastPage ['tx_realurl_pathoverride'] )) {
+		} elseif ($lastPage ['tx_realurl_pathoverride'] && $overridePath = $this->_stripSlashes ( $lastPage ['tx_realurl_pathsegment'] )) {
 			$parts = explode ( '/', $overridePath );
 			$cleanParts = array_map ( array (
 				$this,
