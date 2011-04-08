@@ -132,6 +132,7 @@ class tx_realurl_pagepath {
 	 */
 	protected function _alias2id(&$pagePath) {
 		$pagePathOrigin = $pagePath;
+		$this->pObj->appendFilePart($pagePathOrigin);
 		$keepPath = array ();
 			//Check for redirect
 		$this->_checkAndDoRedirect ( $pagePathOrigin );
