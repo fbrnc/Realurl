@@ -122,7 +122,9 @@ CREATE TABLE pages (
 # Modifying pages_language_overlay table
 #
 CREATE TABLE pages_language_overlay (
-	tx_realurl_pathsegment varchar(255) DEFAULT '' NOT NULL
+	tx_realurl_pathsegment varchar(255) DEFAULT '' NOT NULL,
+	tx_realurl_pathoverride int(1) DEFAULT '0' NOT NULL,
+	tx_realurl_exclude int(1) DEFAULT '0' NOT NULL
 );
 
 #
@@ -138,27 +140,6 @@ CREATE TABLE sys_domain (
 CREATE TABLE sys_template (
 	KEY tx_realurl (root,hidden)
 );
-
-#
-# Table structure for table 'pages'
-#
-CREATE TABLE pages (
-	tx_realurl_pathoverride tinytext NOT NULL,
-	tx_realurl_pathsegment tinytext NOT NULL,
-	tx_realurl_exclude tinyint(3) DEFAULT '0' NOT NULL
-);
-
-
-#
-# Table structure for table 'pages_language_overlay'
-#
-CREATE TABLE pages_language_overlay (
-	tx_realurl_pathoverride tinytext NOT NULL,
-	tx_realurl_pathsegment tinytext NOT NULL,
-	tx_realurl_exclude tinyint(3) DEFAULT '0' NOT NULL
-);
-
-
 
 #
 # Table structure for table 'tx_realurl_cache'
