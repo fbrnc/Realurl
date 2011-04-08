@@ -114,4 +114,13 @@ $TCA['pages_language_overlay']['columns'] += array(
 
 t3lib_extMgm::addToAllTCAtypes('pages_language_overlay', 'tx_realurl_pathsegment,tx_realurl_pathoverride,tx_realurl_exclude', '', 'after:nav_title');
 
+
+	//hook to force regeneration if crawler is active:
+if (TYPO3_MODE == 'FE') {
+	$TYPO3_CONF_VARS['SC_OPTIONS']['tslib/class.tslib_fe.php']['insertPageIncache']['tx_realurl'] = 'EXT:realurl/class.tx_realurl_crawler.php:tx_realurl_crawler';
+	$TYPO3_CONF_VARS['SC_OPTIONS']['tslib/class.tslib_fe.php']['headerNoCache']['tx_realurl'] = 'EXT:r/hooks/class.tx_realurl_crawler.php:tx_realurl_crawler->headerNoCache';
+}
+        // Register processing instruction on tx_crawler
+$TYPO3_CONF_VARS['EXTCONF']['crawler']['procInstructions']['tx_realurl_rebuild'] = 'Force page link regeneration';
+
 ?>
