@@ -29,11 +29,12 @@ CREATE TABLE tx_realurl_uniqalias (
 	value_id int(11) DEFAULT '0' NOT NULL,
 	lang int(11) DEFAULT '0' NOT NULL,
 	expire int(11) DEFAULT '0' NOT NULL,
+	rootpage_id int(11) DEFAULT '0' NOT NULL,
 
 	PRIMARY KEY (uid),
 	KEY tablename (tablename),
-	KEY bk_realurl01 (field_alias(20),field_id,value_id,lang,expire),
-	KEY bk_realurl02 (tablename(32),field_alias(20),field_id,value_alias(20),expire)
+	KEY bk_realurl01 (rootpage_id, field_alias(20),field_id,value_id,lang,expire),
+	KEY bk_realurl02 (rootpage_id, tablename(32),field_alias(20),field_id,value_alias(20),expire)
 );
 
 #
