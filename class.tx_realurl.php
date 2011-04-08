@@ -1224,11 +1224,12 @@ class tx_realurl {
 			}
 		}
 
+		// make preVars accessible
+		$this->pre_GET_VARS = $pre_GET_VARS;
+
 		// Setting page id:
 		list($cachedInfo['id'], $id_GET_VARS, $cachedInfo['rootpage_id']) = $this->decodeSpURL_idFromPath($pathParts);
 
-		// make preVars accessible
-		$this->pre_GET_VARS = $pre_GET_VARS;
 
 		// Fixed Post-vars:
 		$fixedPostVarSetCfg = $this->getPostVarSetConfig($cachedInfo['id'], 'fixedPostVars');
@@ -1387,7 +1388,7 @@ class tx_realurl {
 	protected function decodeSpURL_settingPostVarSets(&$pathParts, $postVarSetCfg, $pid) {
 		if (is_array($postVarSetCfg)) {
 			$GET_string = '';
-//debug($pathParts, __FUNCTION__.__LINE__);die();
+
 			// Getting first value, the key (and keep stripping of sets of segments until the end is reached!)
 			while (false != ($key = array_shift($pathParts))) {
 				$key = rawurldecode($key);

@@ -1218,7 +1218,6 @@ class tx_realurl_advanced {
 			// No language in URL, get default from TSFE
 			$lang = intval($GLOBALS['TSFE']->config['config']['sys_language_uid']);
 		}
-		//debug(array('lang' => $lang, 'languageGetVar' => $this->conf['languageGetVar'], 'opkv' => $this->$this->pObj->orig_paramKeyValues[$this->conf['languageGetVar']]), 'realurl');
 		return $lang;
 	}
 

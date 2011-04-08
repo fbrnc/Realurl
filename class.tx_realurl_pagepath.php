@@ -47,6 +47,11 @@ class tx_realurl_pagepath {
 	var $pObj;
 	var $conf;
 
+	/**
+	 * @var tx_realurl_cachemgmt
+	 */
+	protected $cachemgmt;
+
 	/** Main function -> is called from real_url
 	 * parameters and results are in $params (some by reference)
 	 *
@@ -238,14 +243,12 @@ class tx_realurl_pagepath {
 	 * @author Michael Klapper <michael.klapper@aoemedia.de>
 	 */
 	function _getLanguageVarDecode() {
-		$lang = FALSE;
 		$getVarName = $this->conf['languageGetVar'] ? $this->conf['languageGetVar'] : 'L';
 		$lang = $this->pObj->getRetrievedPreGetVar( $getVarName );
 
 		if ($this->conf['languageGetVarPostFunc']) {
 			$lang = t3lib_div::callUserFunction($this->conf['languageGetVarPostFunc'], $lang, $this );
 		}
-
 		return (int)$lang;
 	}
 
@@ -372,7 +375,7 @@ class tx_realurl_pagepath {
 	 * @return void
 	 */
 	function initCacheMgm($lang) {
-		$this->cachemgmt = new tx_realurl_cachemgmt ( $this->_getWorkspaceId (), $lang );
+		$this->cachemgmt = t3lib_div::makeInstance('tx_realurl_cachemgmt', $this->_getWorkspaceId (), $lang );
 		$this->cachemgmt->setCacheTimeout ( $this->conf ['cacheTimeOut'] );
 		$this->cachemgmt->setRootPid ( $this->_getRootPid () );
 	}
