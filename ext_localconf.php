@@ -1,5 +1,16 @@
 <?php
 
+if (TYPO3_MODE  == 'FE') {
+               //hook to force regeneration if crawler is active:
+        $TYPO3_CONF_VARS['SC_OPTIONS']['tslib/class.tslib_fe.php']['insertPageIncache']['tx_realurl'] = 'EXT:realurl/class.tx_realurl_crawler.php:tx_realurl_crawler';
+        $TYPO3_CONF_VARS['SC_OPTIONS']['tslib/class.tslib_fe.php']['headerNoCache']['tx_realurl'] = 'EXT:realurl/class.tx_realurl_crawler.php:tx_realurl_crawler->headerNoCache';
+}
+if (TYPO3_MODE  == 'BE') {
+               // Register processing instruction on tx_crawler
+       $TYPO3_CONF_VARS['EXTCONF']['crawler']['procInstructions']['tx_realurl_rebuild'] = 'Force page link regeneration';
+}
+
+
 $TYPO3_CONF_VARS['SC_OPTIONS']['t3lib/class.t3lib_tstemplate.php']['linkData-PostProc']['tx_realurl'] = 'EXT:realurl/class.tx_realurl.php:&tx_realurl->encodeSpURL';
 $TYPO3_CONF_VARS['SC_OPTIONS']['tslib/class.tslib_content.php']['typoLink_PostProc']['tx_realurl'] = 'EXT:realurl/class.tx_realurl.php:&tx_realurl->encodeSpURL_urlPrepend';
 $TYPO3_CONF_VARS['SC_OPTIONS']['tslib/class.tslib_fe.php']['checkAlternativeIdMethods-PostProc']['tx_realurl'] = 'EXT:realurl/class.tx_realurl.php:&tx_realurl->decodeSpURL';
