@@ -137,7 +137,7 @@ class tx_realurl_modfunc1 extends t3lib_extobjbase {
 				$this->edit_save();
 				$result .= $this->getDepthSelector();
 				$moduleContent = $this->renderModule($this->initializeTree());
-				$result .= $this->renderSearchForm();
+				//$result .= $this->renderSearchForm();
 				$result .= $moduleContent;
 				break;
 			case 'encode':
@@ -214,6 +214,7 @@ class tx_realurl_modfunc1 extends t3lib_extobjbase {
 		/** @var t3lib_pageTree $tree */
 		$tree->addField('nav_title', true);
 		$tree->addField('alias', true);
+		$tree->addField('l18n_cfg');
 		$tree->addField('tx_realurl_pathsegment', true);
 		$tree->init('AND '.$GLOBALS['BE_USER']->getPagePermsClause(1));
 
@@ -235,260 +236,87 @@ class tx_realurl_modfunc1 extends t3lib_extobjbase {
 	}
 
 
-
-
-
-
-
-
-
-
-
-
-
 	/****************************
 	 *
 	 * Path Cache rendering:
 	 *
 	 ****************************/
-
 	/**
-	 * Rendering the information
+	 * MAIN function for page information of localization
 	 *
-	 * @param	array		The Page tree data
-	 * @return	string		HTML for the information table.
+	 * @return	string		Output HTML for the module.
 	 */
-	function renderModule(t3lib_pageTree $tree)	{
-
-			// Initialize:
-		$searchPath = trim(t3lib_div::_GP('pathPrefixSearch'));
-		$cmd = t3lib_div::_GET('cmd');
-		$entry = t3lib_div::_GET('entry');
-		$searchForm_replace = t3lib_div::_POST('_replace');
-		$searchForm_delete = t3lib_div::_POST('_delete');
-
-		$trackSameUrl = array();
-		$this->searchResultCounter = 0;
-
-			// Traverse tree:
-		$output = '';
-		$cc=0;
-		foreach($tree->tree as $row)	{
-
-				// Get all pagepath entries for page:
-			$pathCacheInfo = $this->getPathCache($row['row']['uid']);
-
-				// Row title:
-			$rowTitle = $row['HTML'].t3lib_BEfunc::getRecordTitle('pages',$row['row'],TRUE);
-			$cellAttrib = ($row['row']['_CSSCLASS'] ? ' class="'.$row['row']['_CSSCLASS'].'"' : '');
-
-				// Add at least one empty element:
-			if (!count($pathCacheInfo))	{
-
-						// Add title:
-					$tCells = array();
-					$tCells[]='<td nowrap="nowrap"'.$cellAttrib.'>'.$rowTitle.'</td>';
-
-						// Empty row:
-					$tCells[]='<td colspan="10" align="center">&nbsp;</td>';
-
-						// Compile Row:
-					$output.= '
-						<tr class="bgColor'.($cc%2 ? '-20':'-10').'">
-							'.implode('
-							',$tCells).'
-						</tr>';
-					$cc++;
+	function renderModule(t3lib_pageTree $tree)
+	{
+		if ($this->pObj->id) {
+			$theOutput = '';
+			if (version_compare(TYPO3_version, '4.3.0', '<')) {
+				$cachemgmtClassName = t3lib_div::makeInstanceClassName('tx_realurl_cachemgmt');
+				$this->cachemgmt = new $cachemgmtClassName($GLOBALS['BE_USER']->workspace, 0, 1);
 			} else {
-				foreach($pathCacheInfo as $c => $inf)	{
-
-						// Init:
-					$deletedEntry = FALSE;
-					$hash = $inf['pagepath'].'|'.$inf['rootpage_id'].'|'.$inf['language_id'];	// MP is not a part of this because the path itself should be different simply because the MP makes a different path! (see tx_realurl_advanced::pagePathtoID())
-
-						// Add icon/title and ID:
-					$tCells = array();
-					if (!$c)	{
-						$tCells[]='<td nowrap="nowrap" rowspan="'.count($pathCacheInfo).'"'.$cellAttrib.'>'.$rowTitle.'</td>';
-						$tCells[]='<td rowspan="'.count($pathCacheInfo).'">'.$inf['page_id'].'</td>';
-					}
-
-						// Add values from alternative field used to generate URL:
-					$baseRow = $row['row'];	// page row as base.
-					$onClick = t3lib_BEfunc::editOnClick('&edit[pages]['.$row['row']['uid'].']=edit&columnsOnly=title,nav_title,alias,tx_realurl_pathsegment',$this->pObj->doc->backPath);
-					$editIcon = '<a href="#" onclick="'.htmlspecialchars($onClick).'">'.
-								'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/edit2.gif','width="11" height="12"').' title="" alt="" />'.
-								'</a>';
-					$onClick = t3lib_BEfunc::viewOnClick($row['row']['uid'],$this->pObj->doc->backPath,'','','','');
-					$editIcon.= '<a href="#" onclick="'.htmlspecialchars($onClick).'">'.
-								'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/zoom.gif','width="12" height="12"').' title="" alt="" />'.
-								'</a>';
-
-					if ($inf['language_id']>0)	{	// For alternative languages, show another list of fields, form page overlay record:
-						$editIcon = '';
-						list($olRec) = t3lib_BEfunc::getRecordsByField('pages_language_overlay','pid',$row['row']['uid'],' AND sys_language_uid='.intval($inf['language_id']));
-						if (is_array($olRec))	{
-							$baseRow = array_merge($baseRow,$olRec);
-							$onClick = t3lib_BEfunc::editOnClick('&edit[pages_language_overlay]['.$olRec['uid'].']=edit&columnsOnly=title,nav_title',$this->pObj->doc->backPath);
-							$editIcon = '<a href="#" onclick="'.htmlspecialchars($onClick).'">'.
-										'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/edit2.gif','width="11" height="12"').' title="" alt="" />'.
-										'</a>';
-							$onClick = t3lib_BEfunc::viewOnClick($row['row']['uid'],$this->pObj->doc->backPath,'','','','&L='.$olRec['sys_language_uid']);
-							$editIcon.= '<a href="#" onclick="'.htmlspecialchars($onClick).'">'.
-										'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/zoom.gif','width="12" height="12"').' title="" alt="" />'.
-										'</a>';
-						} else {
-							$baseRow = array();
-						}
-					}
-					$tCells[]='<td>'.$editIcon.'</td>';
-
-						// 	Sources for segment:
-					$sources = count($baseRow) ? implode(' | ',array($baseRow['tx_realurl_pathsegment'], $baseRow['alias'], $baseRow['nav_title'], $baseRow['title'])) : '';
-					$tCells[]='<td nowrap="nowrap">'.htmlspecialchars($sources).'</td>';
-
-						// Show page path:
-					if (strcmp($searchPath,'') && t3lib_div::isFirstPartOfStr($inf['pagepath'],$searchPath) && !$inf['expire'])	{
-
-							// Delete entry:
-						if ($searchForm_delete)	{
-							$this->deletePathCacheEntry($inf['cache_id']);
-							$deletedEntry = TRUE;
-							$pagePath = '[DELETED]';
-						} elseif ($searchForm_replace) {
-							$replacePart = trim(t3lib_div::_POST('pathPrefixReplace'));
-							$this->editPathCacheEntry($inf['cache_id'],
-								$replacePart.substr($inf['pagepath'],strlen($searchPath)));
-
-							$pagePath =
-									'<span class="typo3-red">'.
-									htmlspecialchars($replacePart).
-									'</span>'.
-									htmlspecialchars(substr($inf['pagepath'],strlen($searchPath)));
-						} else {
-							$pagePath =
-									'<span class="typo3-red">'.
-									htmlspecialchars(substr($inf['pagepath'],0,strlen($searchPath))).
-									'</span>'.
-									htmlspecialchars(substr($inf['pagepath'],strlen($searchPath)));
-							$this->searchResultCounter++;
-						}
-					} else {
-							// Delete entries:
-						if ($cmd==='edit' && (!strcmp($entry,$inf['cache_id']) || !strcmp($entry,'ALL')))	{
-							$pagePath = '<input type="text" name="edit['.$inf['cache_id'].']" value="'.htmlspecialchars($inf['pagepath']).'" size="40" />';
-							if ($cmd==='edit' && $entry!='ALL')	{
-								$pagePath.= $this->saveCancelButtons();
-							}
-
-						} else {
-							$pagePath = htmlspecialchars($inf['pagepath']);
-						}
-					}
-
-					$tCells[]='<td'.($inf['expire'] ? ' style="font-style: italic; color:#999999;"' : '').'>'.$pagePath.'</td>';
-
-					if ($deletedEntry)	{
-						$tCells[]='<td>&nbsp;</td>';
-					} else {
-						$tCells[]='<td>'.
-								'<a href="'.$this->linkSelf('&cmd=delete&entry='.$inf['cache_id']).'">'.
-								'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/garbage.gif','width="11" height="12"').' title="Delete" alt="" />'.
-								'</a>'.
-								'<a href="'.$this->linkSelf('&cmd=edit&entry='.$inf['cache_id']).'">'.
-								'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/edit2.gif','width="11" height="12"').' title="Edit" alt="" />'.
-								'</a>'.
-								'<a href="'.$this->linkSelf('&pathPrefixSearch='.rawurlencode($inf['pagepath'])).'">'.
-								'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/napshot.gif','width="12" height="12"').' title="Use for search" alt="" />'.
-								'</a>'.
-								'<a href="'.$this->linkSelf('&cmd=copy&entry='.$inf['cache_id']).'">'.
-								'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/clip_copy.gif','width="12" height="12"').' title="Copy entry" alt="" />'.
-								'</a>'.
-								'</td>';
-					}
-					$tCells[]='<td'.($inf['expire'] && $inf['expire']<time() ? ' style="color: red;"':'').'>'.
-								($inf['expire'] ? htmlspecialchars(t3lib_BEfunc::dateTimeAge($inf['expire'],-1)) : '').
-								($inf['expire'] ?
-									'<a href="'.$this->linkSelf('&cmd=raiseExpire&entry='.$inf['cache_id']).'">'.
-									'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/up.gif','width="14" height="14"').' title="Set expire time to 30 days" alt="" />'.
-									'</a>' : '').
-								'</td>';
-
-						// Set error msg:
-					$error = '';
-					if (!strcmp($inf['pagepath'],''))	{
-						if ($row['row']['uid']!=$this->pObj->id)	{	// Show error of "Empty" only for levels under the root. Yes, we cannot know that the pObj->id is the true root of the site, but at least any SUB page should probably have a path string!
-							$error = $this->pObj->doc->icons(2).'Empty';
-						}
-					} elseif (isset($trackSameUrl[$hash]))	{
-						$error = $this->pObj->doc->icons(2).'Already used on page ID '.$trackSameUrl[$hash];
-					} else {
-						$error = '&nbsp;';
-					}
-					$tCells[]='<td>'.$error.'</td>';
-
-					$tCells[]='<td>'.htmlspecialchars($inf['language_id']).'</td>';
-					$tCells[]='<td>'.htmlspecialchars($inf['mpvar']).'</td>';
-					$tCells[]='<td>'.htmlspecialchars($inf['rootpage_id']).'</td>';
-
-
-					#$tCells[]='<td nowrap="nowrap">'.htmlspecialchars(t3lib_BEfunc::datetime($inf['expire'])).' / '.htmlspecialchars(t3lib_BEfunc::calcAge($inf['expire']-time())).'</td>';
-
-					$trackSameUrl[$hash] = $inf['page_id'];
-
-						// Compile Row:
-					$rowClass = 'bgColor'.($cc%2 ? '-20':'-10');
-					$output.= '
-						<tr class="'.$rowClass.'">
-							'.implode('
-							',$tCells).'
-						</tr>';
-					$cc++;
-				}
+				$this->cachemgmt = t3lib_div::makeInstance('tx_realurl_cachemgmt', $GLOBALS['BE_USER']->workspace, 0, 1);
 			}
+			$this->pathgen = t3lib_div::makeInstance('tx_realurl_pathgenerator');
+			$this->pathgen->init(array());
+
+			//Add action buttons:
+			$theOutput .= '
+				<table><tr><td valign="top">
+				<h3>Actions:</h3>
+				<input name="id" value="' . $this->pObj->id . '" type="hidden"><input type="submit" value="clear all (complete cache and history)" name="_action_clearall">';
+			$theOutput .= '<br /><input type="submit" value="clear visible tree" name="_action_clearvisible">';
+			$theOutput .= '<br /><input type="submit" value="mark visible tree as dirty" name="_action_dirtyvisible">';
+			$theOutput .= '<br /><input type="submit" value="clear complete history cache" name="_action_clearallhistory">';
+			$theOutput .= '<br /><input type="submit" value="regenerate (FE-calls)" name="_action_regenerate"></td><td valign="top">
+				<h3>Colors:</h3>
+					<table border="0">
+					<tr><td class="c-ok">Cache found</td></tr>
+					<tr><td class="c-ok-expired">Cache expired</td></tr>
+					<tr><td class="c-shortcut">Shortcut (no cache needed)</td></tr>
+					<tr><td class="c-delegation">Delegation (no cache needed)</td></tr>
+					<tr><td class="c-nok">No cache found</td></tr></table>
+				</td></tr></table>';
+			//$theOutput.='<input type="submit" value="regenerate!" name="_action_clearall">';
+			//check actions:
+			if (t3lib_div::_GP('_action_clearall') != '') {
+				$this->cachemgmt->clearAllCache();
+			}
+			if (t3lib_div::_GP('_action_clearallhistory') != '') {
+				$this->cachemgmt->clearAllCacheHistory();
+			}
+
+			// Add CSS needed:
+			$css_content = '
+				TABLE#langTable {
+					margin-top: 10px;
+				}
+				TABLE#langTable TR TD {
+					padding-left : 2px;
+					padding-right : 2px;
+					white-space: nowrap;
+				}
+
+				TR.odd { background-color:#ddd; }
+
+				TD.c-ok { background-color: #A8E95C; }
+				TD.c-ok-expired { background-color: #B8C95C; }
+				TD.c-shortcut { background-color: #B8E95C; font-weight: 200}
+				TD.c-delegation { background-color: #EE0; }
+				/*TD.c-nok { background-color: #E9CD5C; }*/
+				TD.c-leftLine {border-left: 2px solid black; }
+				TD.bgColor5 { font-weight: bold; }
+			';
+			$marker = '/*###POSTCSSMARKER###*/';
+			if (!stristr($this->pObj->content, $marker)) {
+				$theOutput = '<style type="text/css">' . $css_content . '</style>' . chr(10) . $theOutput;
+			} else {
+				$this->pObj->content = str_replace($marker, $css_content . chr(10) . $marker, $this->pObj->content);
+			}
+			$theOutput .= '<hr />AOE realurl path cache for workspace: ' . $GLOBALS['BE_USER']->workspace;
+			// Render information table:
+			$theOutput .= $this->renderTable($tree);
 		}
-
-			// Create header:
-		$tCells = array();
-		$tCells[]='<td>Title:</td>';
-		$tCells[]='<td>ID:</td>';
-		$tCells[]='<td>&nbsp;</td>';
-		$tCells[]='<td>PathSegment | Alias | NavTitle | Title:</td>';
-		$tCells[]='<td>Pagepath:</td>';
-		$tCells[]='<td>'.
-					'<a href="'.$this->linkSelf('&cmd=delete&entry=ALL').'" onclick="return confirm(\'Are you sure you want to flush all cached page paths?\');">'.
-					'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/garbage.gif','width="11" height="12"').' alt="" />'.
-					'</a>'.
-					'<a href="'.$this->linkSelf('&cmd=edit&entry=ALL').'">'.
-					'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/edit2.gif','width="11" height="12"').' title="" alt="" />'.
-					'</a>'.
-					'</td>';
-		$tCells[]='<td>Expires:'.
-						'<a href="'.$this->linkSelf('&cmd=flushExpired').'">'.
-						'<img'.t3lib_iconWorks::skinImg($this->pObj->doc->backPath,'gfx/garbage.gif','width="11" height="12"').' title="Flush all expired" alt="" />'.
-						'</a>'.
-					'</td>';
-		$tCells[]='<td>Errors:</td>';
-		$tCells[]='<td>Lang:</td>';
-		$tCells[]='<td>&MP:</td>';
-		$tCells[]='<td>RootPage ID:</td>';
-		#$tCells[]='<td>Expire:</td>';
-		$output = '
-			<tr class="bgColor5 tableheader">
-				'.implode('
-				',$tCells).'
-			</tr>'.$output;
-
-			// Compile final table and return:
-		$output = '
-		<table border="0" cellspacing="1" cellpadding="0" id="tx-realurl-pathcacheTable" class="lrPadding c-list">'.$output.'
-		</table>';
-
-		if ($cmd==='edit' && $entry=='ALL')	{
-			$output.= $this->saveCancelButtons();
-		}
-
-		return $output;
+		return $theOutput;
 	}
 
 	/**
@@ -1960,9 +1788,131 @@ class tx_realurl_modfunc1 extends t3lib_extobjbase {
 		}
 		return $url;
 	}
+
+    /**
+     * Rendering the  information table.
+     *
+     * @param	array		The Page tree data
+     * @return	string		HTML for the information table.
+     */
+    protected function renderTable (&$tree)
+    {
+        global $LANG;
+        // Title length:
+        $titleLen = $GLOBALS['BE_USER']->uc['titleLen'];
+        // Put together the TREE:
+        $output = '';
+        $newOL_js = array();
+        $langRecUids = array();
+        $languageList = $this->getSystemLanguages();
+        //print_r($languageList);
+        //traverse Tree:
+		$rows = 0;
+        foreach ($tree->tree as $data) {
+            $tCells = array();
+            $editUid = $data['row']['uid'];
+            //check actions:
+            if (t3lib_div::_GP('_action_clearvisible') != '') {
+                $this->cachemgmt->delCacheForCompletePid($editUid);
+            }
+        	if (t3lib_div::_GP('_action_dirtyvisible') != '') {
+                $this->cachemgmt->markAsDirtyCompletePid($editUid);
+            }
+
+            //first cell (tree):
+            // Page icons / titles etc.
+            $tCells[] = '<td' . ($data['row']['_CSSCLASS'] ? ' class="' . $data['row']['_CSSCLASS'] . '"' : '') . '>' . $data['HTML'] . htmlspecialchars(t3lib_div::fixed_lgd_cs($data['row']['title'], $titleLen)) . (strcmp($data['row']['nav_title'], '') ? ' [Nav: <em>' . htmlspecialchars(t3lib_div::fixed_lgd_cs($data['row']['nav_title'], $titleLen)) . '</em>]' : '') . '</td>';
+            //language cells:
+            foreach ($languageList as $language) {
+
+				if( $language['uid'] === '') {
+					continue;
+				}
+
+            	$langId = $language['uid'];
+	            if (t3lib_div::_GP('_action_regenerate') != '') {
+	               $url=t3lib_div::getIndpEnv('TYPO3_SITE_URL').'index.php?id='.$editUid.'&no_cache=1&L='.$langId;
+	               fopen($url,'r');
+	            }
+                $info = '';
+                $params = '&edit[pages][' . $editUid . ']=edit';
+
+                $this->cachemgmt->setLanguageId($langId);
+                $cacheRow=$this->cachemgmt->getCacheRowForPid($editUid);
+                $cacheHistoryRows=$this->cachemgmt->getCacheHistoryRowsForPid($editUid);
+            	$isValidCache=$this->cachemgmt->_isCacheRowStillValid($cacheRow);
+            	$hasEntry=FALSE;
+            	$path='';
+            	if (is_array($cacheRow)) {
+            		$hasEntry=TRUE;
+                	$path = $cacheRow['path'].' <small style="color: #555"><i>'.($cacheRow['dirty']?'X':'').'('.$cacheRow['rootpid'].')</i></small>';
+            	}
+				if ($this->pathgen->isDelegationDoktype($data['row']['doktype'])) {
+                    $path.=' [Delegation]';
+                }
+            	if (count($cacheHistoryRows)>0) {
+            		$path.='[History:'.count($cacheHistoryRows).']';
+            	}
+                if ($isValidCache) {
+                    $status = 'c-ok';
+                } elseif ($hasEntry) {
+                    $status = 'c-ok-expired';
+                } elseif ($data['row']['doktype'] == 4) {
+                    $path = '--- [shortcut]';
+                    $status = 'c-shortcut';
+                } elseif ($this->pathgen->isDelegationDoktype($data['row']['doktype'])) {
+                    $status = 'c-delegation';
+                } else {
+                    $status = 'c-nok';
+                }
+                $viewPageLink = '<a href="#" onclick="' . htmlspecialchars(t3lib_BEfunc::viewOnClick($data['row']['uid'], $GLOBALS['BACK_PATH'], '', '', '', '&L=###LANG_UID###')) . '">' . '<img' . t3lib_iconWorks::skinImg($GLOBALS['BACK_PATH'], 'gfx/zoom.gif', 'width="12" height="12"') . ' title="' . $LANG->getLL('lang_viewPage', '1') . '" border="0" alt="" />' . '</a>';
+                $viewPageLink=str_replace('###LANG_UID###',$langId,$viewPageLink);
+                if ($langId == 0) {
+                    //Default
+                    //"View page" link is created:
+                    $viewPageLink = '<a href="#" onclick="' . htmlspecialchars(t3lib_BEfunc::viewOnClick($data['row']['uid'], $GLOBALS['BACK_PATH'], '', '', '', '&L=###LANG_UID###')) . '">' . '<img' . t3lib_iconWorks::skinImg($GLOBALS['BACK_PATH'], 'gfx/zoom.gif', 'width="12" height="12"') . ' title="' . $LANG->getLL('lang_viewPage', '1') . '" border="0" alt="" />' . '</a>';
+                    $info .= '<a href="#" onclick="' . htmlspecialchars(t3lib_BEfunc::editOnClick($params, $GLOBALS['BACK_PATH'])) . '">' . '<img' . t3lib_iconWorks::skinImg($GLOBALS['BACK_PATH'], 'gfx/edit2.gif', 'width="11" height="12"') . ' title="' . $LANG->getLL('lang_editDefaultLanguagePage', '1') . '" border="0" alt="" />' . '</a>';
+                    /*	$info.= '<a href="#" onclick="'.htmlspecialchars('top.loadEditId('.intval($data['row']['uid']).',"&SET[language]=0"); return false;').'">'.
+							'<img'.t3lib_iconWorks::skinImg($GLOBALS['BACK_PATH'],'gfx/edit_page.gif','width="12" height="12"').' title="'.$LANG->getLL('lang_editPage','1').'" border="0" alt="" />'.
+							'</a>';
+							*/
+                    $info .= str_replace('###LANG_UID###', '0', $viewPageLink);
+                    $info .= $path;
+                    // Put into cell:
+                    $tCells[] = '<td class="' . $status . ' c-leftLine">' . $info . '</td>';
+                } else {
+
+                    //Normal Languages:
+                    $tCells[] = '<td class="' . $status . ' c-leftLine">' .$viewPageLink. $path . '</td>';
+                }
+            }
+			$rows++;
+            $output .= '
+			<tr'.( ( $rows%2 ) ? ' class="odd"' : '' ).'>
+				' . implode('
+				', $tCells) . '
+			</tr>';
+        }
+        //first ROW:
+        //****************
+        $firstRowCells[] = '<td style="min-width:300px">' . $LANG->getLL('lang_renderl10n_page', '1') . ':</td>';
+        foreach ($languageList as $language) {
+			if( $language['uid'] !== '') {
+				$firstRowCells[] = '<td class="c-leftLine">' . $language['title'] . ' [' . $language['uid'] . ']</td>';
+			}
+        }
+        $output = '
+			<tr class="bgColor2">
+				' . implode('
+				', $firstRowCells) . '
+			</tr>' . $output;
+        $output = '
+
+		<table border="0" cellspacing="0" cellpadding="0" id="langTable">' . $output . '
+		</table>';
+        return $output;
+    }
 }
-
-
 
 if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/realurl/modfunc1/class.tx_realurl_modfunc1.php'])	{
 	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/realurl/modfunc1/class.tx_realurl_modfunc1.php']);
