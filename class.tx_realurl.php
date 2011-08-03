@@ -1659,8 +1659,14 @@ class tx_realurl {
 							} elseif (is_array($setup['lookUpTable']) && $value != '') {
 								$temp = $value;
 								$value = $this->lookUpTranslation($setup['lookUpTable'], $value, TRUE);
-								if ($setup['lookUpTable']['enable404forInvalidAlias'] && !t3lib_div::testInt($value) && !strcmp($value, $temp)) {
-									$this->decodeSpURL_throw404('Couldn\'t map alias "' . $value . '" to an ID');
+								if (!t3lib_div::testInt($value) && !strcmp($value, $temp)) {
+									// no match found
+									if ($setup['lookUpTable']['enable404forInvalidAlias'] ) {
+										$this->decodeSpURL_throw404('Couldn\'t map alias "' . $value . '" to an ID');
+									} elseif($setup['lookUpTable']['noMatchIfNotFound']) {
+										array_unshift($pathParts, $origValue);
+										break;
+									}
 								}
 							} elseif (isset($setup['valueDefault'])) { // If no matching value and a default value is given, set that:
 								$value = $setup['valueDefault'];
